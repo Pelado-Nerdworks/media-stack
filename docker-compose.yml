@@ -11,8 +11,13 @@ name: media-stack
 # ─── Paths ────────────────────────────────────────────────────────────────────
 # Las rutas de host (./config, ./data) se configuran vía variables de entorno
 # en un archivo `.env` al lado de este compose. Copiá `.env.example` como `.env`
-# y editá los valores si querés mover las carpetas (ej. a /srv/media).
+# y editá los valores si querés mover las carpetas (ej. a /srv/media-stack).
 # Defaults apuntan a ./config y ./data relativos al compose, igual que antes.
+#
+# ─── Data layout (TRaSH Guides) ────────────────────────────────────────────────
+# La estructura interna sigue la convención de TRaSH Guides para que los *arr
+# puedan usar hardlinks y moves atómicos entre /data/torrents y /data/media.
+# Ver docs/DATA_LAYOUT.md o https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/
 
 services:
   # === Reverse proxy (Caddy con Caddyfile estático) ===
@@ -55,8 +60,9 @@ services:
       - TZ=America/Argentina/Mendoza
     volumes:
       - ${CONFIG_DIR:-./config}/sonarr:/config
-      - ${DATA_DIR:-./data}/downloads:/downloads
-      - ${DATA_DIR:-./data}/series:/tv
+      # TRaSH layout: Sonarr ve /data entero para que los hardlinks funcionen
+      # y los moves desde /data/torrents a /data/media sean atómicos.
+      - ${DATA_DIR:-./data}:/data
     networks:
       - proxy
 
@@ -71,8 +77,7 @@ services:
       - TZ=America/Argentina/Mendoza
     volumes:
       - ${CONFIG_DIR:-./config}/radarr:/config
-      - ${DATA_DIR:-./data}/downloads:/downloads
-      - ${DATA_DIR:-./data}/movies:/movies
+      - ${DATA_DIR:-./data}:/data
     networks:
       - proxy
 
@@ -87,8 +92,8 @@ services:
       - TZ=America/Argentina/Mendoza
     volumes:
       - ${CONFIG_DIR:-./config}/bazarr:/config
-      - ${DATA_DIR:-./data}/movies:/movies
-      - ${DATA_DIR:-./data}/series:/tv
+      # Bazarr solo necesita ver la biblioteca final.
+      - ${DATA_DIR:-./data}/media:/data/media
     depends_on:
       - radarr
       - sonarr
@@ -106,8 +111,7 @@ services:
       - TZ=America/Argentina/Mendoza
     volumes:
       - ${CONFIG_DIR:-./config}/lidarr:/config
-      - ${DATA_DIR:-./data}/downloads:/downloads
-      - ${DATA_DIR:-./data}/music:/music
+      - ${DATA_DIR:-./data}:/data
     networks:
       - proxy
 
@@ -123,7 +127,9 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - ${CONFIG_DIR:-./config}/qbittorrent:/config
-      - ${DATA_DIR:-./data}/downloads:/downloads
+      # qBittorrent solo escribe en /data/torrents. Los *arr mueven los archivos
+      # terminados a /data/media vía hardlink + delete del original.
+      - ${DATA_DIR:-./data}/torrents:/data/torrents
     networks:
       - proxy
 
@@ -139,9 +145,8 @@ services:
       - JELLYFIN_PublishedServerUrl=http://localhost:8096
     volumes:
       - ${CONFIG_DIR:-./config}/jellyfin:/config
-      - ${DATA_DIR:-./data}/movies:/data/movies
-      - ${DATA_DIR:-./data}/series:/data/series
-      - ${DATA_DIR:-./data}/music:/data/music
+      # Jellyfin solo escanea la biblioteca final.
+      - ${DATA_DIR:-./data}/media:/data/media
     networks:
       - proxy
 
