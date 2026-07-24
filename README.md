@@ -1,92 +1,92 @@
-# Media Stack — Self-hosted Jellyfin + *arr
+# Media Stack — Jellyfin + *arr auto-hospedado
 
-A complete Docker stack for running your own media server at home: movies, TV, music, subtitles, downloads and a Netflix-style request UI, all behind a single reverse proxy with path-based routing.
+Stack completo en Docker para correr tu propio servidor de medios en casa: películas, series, música, subtítulos, descargas y una UI estilo Netflix para pedir contenido, todo detrás de un único reverse proxy con routing por path.
 
-## What's inside
+## ¿Qué incluye?
 
-- **Caddy** — reverse proxy with automatic path-based routing (one domain, many apps)
-- **Jellyfin** — media server (movies, TV, music)
-- **Sonarr** / **Radarr** / **Lidarr** — library automation (TV, movies, music)
-- **Prowlarr** — indexer manager (one place to add trackers)
-- **Bazarr** — automatic subtitles
-- **qBittorrent** — torrent client
-- **Jellyseerr** — request management UI (think Netflix for your users)
-- **Wizarr** — user invitations
+- **Caddy** — reverse proxy con routing automático por path (un dominio, muchas apps)
+- **Jellyfin** — servidor de medios (películas, series, música)
+- **Sonarr** / **Radarr** / **Lidarr** — automatización de bibliotecas (TV, películas, música)
+- **Prowlarr** — gestor de indexers (un solo lugar para agregar trackers)
+- **Bazarr** — subtítulos automáticos
+- **qBittorrent** — cliente torrent
+- **Jellyseerr** — UI de pedidos (un Netflix para tus usuarios)
+- **Wizarr** — invitaciones de usuarios
 
-See [`architecture.excalidraw`](architecture.excalidraw) for the full topology diagram (open it at <https://excalidraw.com>).
+Mirá [`architecture.excalidraw`](architecture.excalidraw) para el diagrama completo de topología (abrilo en <https://excalidraw.com>).
 
-## Requirements
+## Requisitos
 
-- Linux server (or VM) with **Docker 24+** and **Docker Compose v2**
-- ~20 GB free disk for configs and downloads (more if you keep a large library)
-- Ports **80** and **443** open
-- A public domain (recommended for HTTPS) or local DNS entries — the stack works with `http://localhost` too, but HTTPS automation requires a real domain
+- Servidor Linux (o VM) con **Docker 24+** y **Docker Compose v2**
+- ~20 GB libres en disco para configs y descargas (más si vas a tener una biblioteca grande)
+- Puertos **80** y **443** abiertos
+- Un dominio público (recomendado para HTTPS) o entradas de DNS local — el stack funciona con `http://localhost` también, pero el HTTPS automático necesita un dominio real
 
-## Quickstart
+## Inicio rápido
 
-1. Clone this repo:
+1. Cloná el repo:
 
    ```bash
    git clone https://github.com/Pelado-Nerdworks/media-stack.git
    cd media-stack
    ```
 
-2. Copy the example env file:
+2. Copiá el archivo de ejemplo de variables de entorno:
 
    ```bash
    cp .env.example .env
    ```
 
-   By default, configs are stored in `./config/` and media/downloads in `./data/`. Edit `.env` if you want to point them somewhere else (see [Configuration](#configuration) below).
+   Por defecto, las configs se guardan en `./config/` y las descargas/bibliotecas en `./data/`. Editá `.env` si querés apuntarlas a otro lado (ver [Configuración](#configuración) más abajo).
 
-3. Start the stack:
+3. Levantá el stack:
 
    ```bash
    docker compose up -d
    ```
 
-4. Wait about a minute for every app to bootstrap its config, then run the subpath setup:
+4. Esperá un minuto a que cada app genere su config inicial y corré el setup de subpaths:
 
    ```bash
    bash scripts/configure-base-urls.sh
    ```
 
-   This sets each app's internal base URL so it answers under `/jellyfin`, `/sonarr`, etc. It's idempotent — safe to re-run.
+   Esto configura la URL base interna de cada app para que responda bajo `/jellyfin`, `/sonarr`, etc. Es idempotente — se puede volver a correr sin problema.
 
-5. Restart the apps so they pick up the new URLs:
+5. Reiniciá las apps para que tomen las nuevas URLs:
 
    ```bash
    docker compose restart
    ```
 
-6. Open the URLs from your browser:
+6. Abrí las URLs en tu navegador:
 
    | App | URL |
    | --- | --- |
-   | Jellyfin | `http://your-server/jellyfin` |
-   | Sonarr | `http://your-server/sonarr` |
-   | Radarr | `http://your-server/radarr` |
-   | Bazarr | `http://your-server/bazarr` |
-   | Prowlarr | `http://your-server/prowlarr` |
-   | Lidarr | `http://your-server/lidarr` |
-   | qBittorrent | `http://your-server/qbittorrent` |
-   | Jellyseerr | `http://your-server/jellyseerr` |
-   | Wizarr | `http://your-server/wizarr` |
+   | Jellyfin | `http://tu-servidor/jellyfin` |
+   | Sonarr | `http://tu-servidor/sonarr` |
+   | Radarr | `http://tu-servidor/radarr` |
+   | Bazarr | `http://tu-servidor/bazarr` |
+   | Prowlarr | `http://tu-servidor/prowlarr` |
+   | Lidarr | `http://tu-servidor/lidarr` |
+   | qBittorrent | `http://tu-servidor/qbittorrent` |
+   | Jellyseerr | `http://tu-servidor/jellyseerr` |
+   | Wizarr | `http://tu-servidor/wizarr` |
 
-   On first load, each app asks you to create an account. See [First-time setup](#first-time-setup) below.
+   La primera vez, cada app te pide crear una cuenta. Mirá [Configuración inicial](#configuración-inicial) más abajo.
 
-## Configuration
+## Configuración
 
-### Storage paths
+### Rutas de almacenamiento
 
-By default, the stack stores configs in `./config/` and media/downloads in `./data/`, relative to `docker-compose.yml`. To move them elsewhere (e.g. `/srv/media-stack/`), edit `.env`:
+Por defecto, el stack guarda configs en `./config/` y medios/descargas en `./data/`, relativas al `docker-compose.yml`. Para moverlas a otro lado (por ejemplo `/srv/media-stack/`), editá `.env`:
 
 ```env
 CONFIG_DIR=/srv/media-stack/config
 DATA_DIR=/srv/media-stack/data
 ```
 
-Then move the existing contents:
+Después mové el contenido existente:
 
 ```bash
 rsync -av ./config/ /srv/media-stack/config/
@@ -95,74 +95,74 @@ docker compose down
 docker compose up -d
 ```
 
-`./config/` and `./data/` are in `.gitignore` so personal data never leaks to the repo.
+`./config/` y `./data/` están en `.gitignore`, así no se filtran datos personales al repo.
 
-### Time zone
+### Zona horaria
 
-All apps are configured with `America/Argentina/Mendoza`. To change, edit the `TZ=` entries for each service in `docker-compose.yml`.
+Todas las apps están configuradas con `America/Argentina/Mendoza`. Para cambiarla, editá las entradas `TZ=` de cada servicio en `docker-compose.yml`.
 
-### User / permissions
+### Usuario / permisos
 
-Apps run with `PUID=1000` / `PGID=1000` (typical first user on Ubuntu/Debian). To match your own user, run `id -u` and `id -g`, then update those values in `docker-compose.yml`.
+Las apps corren con `PUID=1000` / `PGID=1000` (típico del primer usuario en Ubuntu/Debian). Para que coincidan con tu usuario, corré `id -u` y `id -g`, y actualizá esos valores en `docker-compose.yml`.
 
 ### HTTPS
 
-Caddy is ready for automatic HTTPS via Let's Encrypt. To enable it, point a real domain at your server (DNS A record) and edit the Caddyfile in `config/caddy/` to add `email` and the domain. See the [Caddy docs](https://caddyserver.com/docs/automatic-https).
+Caddy está listo para HTTPS automático vía Let's Encrypt. Para activarlo, apuntá un dominio real a tu servidor (registro A en DNS) y editá el Caddyfile en `config/caddy/` para agregar el `email` y el dominio. Mirá la [doc de Caddy](https://caddyserver.com/docs/automatic-https).
 
-## First-time setup
+## Configuración inicial
 
-After the stack is up and reachable:
+Una vez que el stack está arriba y accesible:
 
-1. **Prowlarr** — `Settings → Indexers → Add Indexer`. Add your favourite trackers.
-2. **Sonarr / Radarr / Lidarr** — `Settings → Indexers → Add → Prowlarr` (uses Prowlarr's API key, found under `Settings → General` in Prowlarr).
-3. **Sonarr / Radarr / Lidarr** — `Settings → Download Clients → Add → qBittorrent` (default port `8080` inside the container).
-4. **qBittorrent** — log in with the temporary credentials printed in the container logs:
+1. **Prowlarr** — `Settings → Indexers → Add Indexer`. Agregá tus trackers favoritos.
+2. **Sonarr / Radarr / Lidarr** — `Settings → Indexers → Add → Prowlarr` (usa la API key de Prowlarr, está en `Settings → General` dentro de Prowlarr).
+3. **Sonarr / Radarr / Lidarr** — `Settings → Download Clients → Add → qBittorrent` (puerto default `8080` adentro del container).
+4. **qBittorrent** — iniciá sesión con la contraseña temporal que imprime el container en los logs:
    ```bash
    docker logs qbittorrent | grep -i 'temporary password'
    ```
-   Change the password immediately after logging in.
-5. **Jellyfin** — add libraries pointing to `/data/movies`, `/data/series`, `/data/music`.
-6. **Bazarr** — `Settings → Sonarr/Radarr → Connect` (paste each app's API key).
-7. **Jellyseerr** — connect to Jellyfin (API key from `Dashboard → API Keys`) and to Sonarr/Radarr.
-8. **Wizarr** — generate invitation links from the web UI to onboard family/friends.
+   Cambiala apenas entres.
+5. **Jellyfin** — agregá bibliotecas apuntando a `/data/movies`, `/data/series`, `/data/music`.
+6. **Bazarr** — `Settings → Sonarr/Radarr → Connect` (pegá la API key de cada app).
+7. **Jellyseerr** — conectalo a Jellyfin (API key en `Dashboard → API Keys`) y a Sonarr/Radarr.
+8. **Wizarr** — generá links de invitación desde la UI web para sumar amigos o familia.
 
-## Daily operations
+## Operaciones diarias
 
 ```bash
-# Show what's running
+# Ver qué está corriendo
 docker compose ps
 
-# Tail logs from one app
+# Ver logs en vivo de una app
 docker compose logs -f jellyfin
 
-# Update a single image
+# Actualizar una imagen
 docker compose pull sonarr
 docker compose up -d sonarr
 
-# Update everything
+# Actualizar todo
 docker compose pull
 docker compose up -d
 
-# Stop the stack (keeps configs and data)
+# Frenar el stack (conserva configs y datos)
 docker compose down
 
-# Stop and delete EVERYTHING — configs included (destructive!)
+# Frenar y borrar TODO — configs incluidas (¡destructivo!)
 docker compose down -v
 ```
 
 ## Troubleshooting
 
-- **App shows a blank page or 404 after `docker compose up`.** Subpath config probably didn't apply. Run `bash scripts/configure-base-urls.sh` and then `docker compose restart`.
-- **qBittorrent keeps asking for a password.** It's the temporary one printed by the container on first boot. Run `docker logs qbittorrent | grep -i 'temporary password'`.
-- **Caddy returns 502 / can't reach the apps.** Make sure Caddy is up (`docker compose ps caddy`) and that all the other containers are on the `proxy` network (they are by default).
-- **"Permission denied" errors writing to `/downloads` or `/movies`.** `PUID`/`PGID` in `docker-compose.yml` don't match your host user. Update them and restart.
-- **"Address already in use" on ports 80/443.** Another web server (nginx, apache, another Caddy) is already bound. Stop it or change the ports in `docker-compose.yml`.
+- **La app muestra página en blanco o 404 después de `docker compose up`.** Probablemente no se aplicó la config de subpath. Corré `bash scripts/configure-base-urls.sh` y después `docker compose restart`.
+- **qBittorrent pide contraseña y no la aceptás.** Es la contraseña temporal que imprime el container en el primer arranque. Corré `docker logs qbittorrent | grep -i 'temporary password'`.
+- **Caddy devuelve 502 / no llega a las apps.** Verificá que Caddy esté arriba (`docker compose ps caddy`) y que los demás containers estén en la red `proxy` (lo están por default).
+- **Errores de "Permission denied" escribiendo a `/downloads` o `/movies`.** Los valores `PUID`/`PGID` en `docker-compose.yml` no coinciden con tu usuario del host. Actualizalos y reiniciá.
+- **"Address already in use" en los puertos 80/443.** Hay otro servidor web (nginx, apache, otro Caddy) ocupando esos puertos. Frenalo o cambialos en `docker-compose.yml`.
 
-## Folder structure
+## Estructura de carpetas
 
 ```
 media-stack/
-├── config/                # Each app's settings (git-ignored)
+├── config/                # Settings de cada app (ignorado por git)
 │   ├── jellyfin/
 │   ├── sonarr/
 │   ├── radarr/
@@ -174,7 +174,7 @@ media-stack/
 │   ├── wizarr/
 │   └── caddy/
 │       └── Caddyfile
-├── data/                  # Media + downloads (git-ignored)
+├── data/                  # Medios + descargas (ignorado por git)
 │   ├── movies/
 │   ├── series/
 │   ├── music/
@@ -188,14 +188,14 @@ media-stack/
 └── README.md
 ```
 
-## Contributing
+## Contribuciones
 
-Pull requests welcome. Please keep changes scoped and update this README when you add or change services.
+Pull requests bienvenidos. Mantené los cambios enfocados y actualizá este README cuando agregues o cambies servicios.
 
-## Acknowledgements
+## Agradecimientos
 
-- [LinuxServer.io](https://docs.linuxserver.io/) for maintaining most of the Docker images
-- The [Servarr](https://wiki.servarr.com/) project (Sonarr, Radarr, Lidarr, Prowlarr, Bazarr)
-- [Jellyfin](https://jellyfin.org) for the media server
-- [Jellyseerr](https://github.com/Fallenbagel/jellyseerr) for the request UI
-- [Wizarr](https://github.com/Wizarrrr/wizarr) for the invitation system
+- [LinuxServer.io](https://docs.linuxserver.io/) por mantener la mayoría de las imágenes Docker
+- El proyecto [Servarr](https://wiki.servarr.com/) (Sonarr, Radarr, Lidarr, Prowlarr, Bazarr)
+- [Jellyfin](https://jellyfin.org) por el servidor de medios
+- [Jellyseerr](https://github.com/Fallenbagel/jellyseerr) por la UI de pedidos
+- [Wizarr](https://github.com/Wizarrrr/wizarr) por el sistema de invitaciones
