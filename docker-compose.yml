@@ -116,10 +116,15 @@ services:
       - proxy
 
   # === Downloads ===
+  # qBittorrent se expone DIRECTO en :8080 del host, sin pasar por Caddy.
+  # No soporta subpath de forma estable (las URLs internas del HTML son relativas
+  # y rompen cuando Caddy strippea el prefijo). Es la práctica estándar.
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
     restart: unless-stopped
+    ports:
+      - "8080:8080"
     environment:
       - PUID=1000
       - PGID=1000

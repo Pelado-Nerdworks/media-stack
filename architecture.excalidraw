@@ -3004,6 +3004,42 @@
           135.0
         ]
       ]
+    },
+    {
+      "id": "qb_badge",
+      "type": "text",
+      "x": 590.0,
+      "y": 1014,
+      "width": 200,
+      "height": 26,
+      "angle": 0,
+      "strokeColor": "#d9480f",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 1234567,
+      "version": 1,
+      "versionNonce": 2345678,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1,
+      "link": null,
+      "locked": false,
+      "text": "🌐 expuesto en :8080 (sin proxy)",
+      "fontSize": 14,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "🌐 expuesto en :8080 (sin proxy)",
+      "lineHeight": 1.25,
+      "autoResize": true
     }
   ],
   "appState": {

@@ -79,11 +79,13 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
    | Bazarr | `http://tu-servidor/bazarr` |
    | Prowlarr | `http://tu-servidor/prowlarr` |
    | Lidarr | `http://tu-servidor/lidarr` |
-   | qBittorrent | `http://tu-servidor/qbittorrent` |
    | Jellyseerr | `http://tu-servidor/jellyseerr` |
    | Wizarr | `http://tu-servidor/wizarr` |
+   | **qBittorrent** | **`http://tu-servidor:8080`** (puerto dedicado) |
 
    La primera vez, cada app te pide crear una cuenta. Mirá [Configuración inicial](#configuración-inicial) más abajo.
+
+> **Por qué qBittorrent no usa subpath**: emite URLs relativas en el HTML (`scripts/login.js`, etc.) que no funcionan si Caddy strippea el prefijo. Es la práctica estándar exponerlo en `:8080` directo. Ver `docs/DATA_LAYOUT.md` para el detalle.
 
 ## Configuración
 
@@ -129,7 +131,7 @@ Una vez que el stack está arriba y accesible:
    - Sonarr: `/data/series`
    - Radarr: `/data/movies`
    - Lidarr: `/data/music`
-4. **Sonarr / Radarr / Lidarr** — `Settings → Download Clients → Add → qBittorrent` (puerto default `8080` adentro del container, host `qbittorrent`).
+4. **Sonarr / Radarr / Lidarr** — `Settings → Download Clients → Add → qBittorrent`. Hostname: `qbittorrent` (resolución por la red Docker interna), puerto `8080`. Los *arr no necesitan tocar el puerto publicado en el host, solo el nombre del service.
 5. **qBittorrent** — iniciá sesión con la contraseña temporal que imprime el container en los logs:
    ```bash
    docker logs qbittorrent | grep -i 'temporary password'
