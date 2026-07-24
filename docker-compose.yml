@@ -2,7 +2,7 @@ name: media-stack
 
 # Stack de medios auto-hospedado con acceso externo via subpaths.
 # Reverse proxy: Caddy con Caddyfile estático (config/caddy/Caddyfile).
-# Acceso: http://<IP-O-DOMINIO>/{jellyfin,sonarr,radarr,bazarr,prowlarr,lidarr,jellyseerr,wizarr,qbittorrent}
+# Acceso: http://<IP-O-DOMINIO>/{jellyfin,sonarr,radarr,bazarr,jellyseerr,wizarr,qbittorrent}
 #
 # Cada app necesita tener su "Base URL" / "UrlBase" seteada para que el subpath funcione.
 # Después del primer boot corré `scripts/configure-base-urls.sh` para configurarlas
@@ -36,7 +36,7 @@ services:
       - proxy
 
   # === Indexer manager ===
-  # Jackett se expone DIRECTO en :9117 del host. Lo usan Sonarr/Radarr/Lidarr
+  # Jackett se expone DIRECTO en :9117 del host. Lo usan Sonarr/Radarr
   # via http://jackett:9117 adentro de la red Docker (no requiere subpath).
   jackett:
     image: lscr.io/linuxserver/jackett:latest
@@ -116,21 +116,6 @@ services:
     depends_on:
       - radarr
       - sonarr
-    networks:
-      - proxy
-
-  # === Music ===
-  lidarr:
-    image: lscr.io/linuxserver/lidarr:latest
-    container_name: lidarr
-    restart: unless-stopped
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/Argentina/Mendoza
-    volumes:
-      - ${CONFIG_DIR:-./config}/lidarr:/config
-      - ${DATA_DIR:-./data}:/data
     networks:
       - proxy
 

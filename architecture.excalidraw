@@ -853,13 +853,13 @@
       "updated": 1,
       "link": null,
       "locked": false,
-      "text": "🌐 Caddy (reverse proxy)\n/jellyfin · /sonarr · /radarr · /prowlarr · /bazarr · /lidarr · /qbittorrent · /wizarr · /jellyseerr",
+      "text": "🌐 Caddy (reverse proxy)\n/jellyfin · /sonarr · /radarr · /bazarr · /qbittorrent · /wizarr · /jellyseerr",
       "fontSize": 14,
       "fontFamily": 1,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "caddy",
-      "originalText": "🌐 Caddy (reverse proxy)\n/jellyfin · /sonarr · /radarr · /prowlarr · /bazarr · /lidarr · /qbittorrent · /wizarr · /jellyseerr",
+      "originalText": "🌐 Caddy (reverse proxy)\n/jellyfin · /sonarr · /radarr · /bazarr · /qbittorrent · /wizarr · /jellyseerr",
       "lineHeight": 1.25,
       "autoResize": true
     },
@@ -1210,76 +1210,6 @@
       "verticalAlign": "middle",
       "containerId": "radarr",
       "originalText": "🎞️ Radarr\nPelículas",
-      "lineHeight": 1.25,
-      "autoResize": true
-    },
-    {
-      "id": "lidarr",
-      "type": "rectangle",
-      "x": 850,
-      "y": 660,
-      "width": 240,
-      "height": 80,
-      "angle": 0,
-      "strokeColor": "#1e1e1e",
-      "backgroundColor": "#d0bfff",
-      "fillStyle": "solid",
-      "strokeWidth": 2,
-      "strokeStyle": "solid",
-      "roughness": 1,
-      "opacity": 100,
-      "groupIds": [],
-      "frameId": null,
-      "roundness": {
-        "type": 3
-      },
-      "seed": 2581297,
-      "version": 1,
-      "versionNonce": 9328691,
-      "isDeleted": false,
-      "boundElements": [
-        {
-          "id": "lidarr_t",
-          "type": "text"
-        }
-      ],
-      "updated": 1,
-      "link": null,
-      "locked": false
-    },
-    {
-      "id": "lidarr_t",
-      "type": "text",
-      "x": 860,
-      "y": 670,
-      "width": 220,
-      "height": 60,
-      "angle": 0,
-      "strokeColor": "#1e1e1e",
-      "backgroundColor": "transparent",
-      "fillStyle": "solid",
-      "strokeWidth": 1,
-      "strokeStyle": "solid",
-      "roughness": 1,
-      "opacity": 100,
-      "groupIds": [],
-      "frameId": null,
-      "roundness": null,
-      "seed": 6410605,
-      "version": 1,
-      "versionNonce": 257762,
-      "isDeleted": false,
-      "boundElements": null,
-      "updated": 1,
-      "link": null,
-      "locked": false,
-      "text": "🎵 Lidarr\nMúsica",
-      "fontSize": 18,
-      "fontFamily": 1,
-      "textAlign": "center",
-      "verticalAlign": "middle",
-      "containerId": "lidarr",
-      "originalText": "🎵 Lidarr\nMúsica",
       "lineHeight": 1.25,
       "autoResize": true
     },
@@ -2086,58 +2016,6 @@
       ]
     },
     {
-      "id": "a_seerr_lid",
-      "type": "arrow",
-      "x": 541.0,
-      "y": 475.0,
-      "width": 429.0,
-      "height": 185.0,
-      "angle": 0,
-      "strokeColor": "#1e1e1e",
-      "backgroundColor": "transparent",
-      "fillStyle": "solid",
-      "strokeWidth": 2,
-      "strokeStyle": "solid",
-      "roughness": 1,
-      "opacity": 100,
-      "groupIds": [],
-      "frameId": null,
-      "roundness": {
-        "type": 2
-      },
-      "seed": 3644037,
-      "version": 1,
-      "versionNonce": 5983728,
-      "isDeleted": false,
-      "boundElements": null,
-      "updated": 1,
-      "link": null,
-      "locked": false,
-      "startBinding": {
-        "elementId": "jellyseerr",
-        "focus": 0,
-        "gap": 6
-      },
-      "endBinding": {
-        "elementId": "lidarr",
-        "focus": 0,
-        "gap": 6
-      },
-      "lastCommittedPoint": null,
-      "startArrowhead": null,
-      "endArrowhead": "arrow",
-      "points": [
-        [
-          0,
-          0
-        ],
-        [
-          429.0,
-          185.0
-        ]
-      ]
-    },
-    {
       "id": "a_son_prw",
       "type": "arrow",
       "x": 410.0,
@@ -2242,58 +2120,6 @@
       ]
     },
     {
-      "id": "a_lid_prw",
-      "type": "arrow",
-      "x": 1090.0,
-      "y": 700.0,
-      "width": 40.0,
-      "height": 130.0,
-      "angle": 0,
-      "strokeColor": "#1e1e1e",
-      "backgroundColor": "transparent",
-      "fillStyle": "solid",
-      "strokeWidth": 2,
-      "strokeStyle": "solid",
-      "roughness": 1,
-      "opacity": 100,
-      "groupIds": [],
-      "frameId": null,
-      "roundness": {
-        "type": 2
-      },
-      "seed": 7129322,
-      "version": 1,
-      "versionNonce": 6333086,
-      "isDeleted": false,
-      "boundElements": null,
-      "updated": 1,
-      "link": null,
-      "locked": false,
-      "startBinding": {
-        "elementId": "lidarr",
-        "focus": 0,
-        "gap": 6
-      },
-      "endBinding": {
-        "elementId": "prowlarr",
-        "focus": 0,
-        "gap": 6
-      },
-      "lastCommittedPoint": null,
-      "startArrowhead": null,
-      "endArrowhead": "arrow",
-      "points": [
-        [
-          0,
-          0
-        ],
-        [
-          40.0,
-          130.0
-        ]
-      ]
-    },
-    {
       "id": "a_son_qb",
       "type": "arrow",
       "x": 290.0,
@@ -2393,58 +2219,6 @@
         ],
         [
           60.0,
-          180.0
-        ]
-      ]
-    },
-    {
-      "id": "a_lid_qb",
-      "type": "arrow",
-      "x": 970.0,
-      "y": 740.0,
-      "width": -164.79999999999995,
-      "height": 180.0,
-      "angle": 0,
-      "strokeColor": "#1e1e1e",
-      "backgroundColor": "transparent",
-      "fillStyle": "solid",
-      "strokeWidth": 2,
-      "strokeStyle": "solid",
-      "roughness": 1,
-      "opacity": 100,
-      "groupIds": [],
-      "frameId": null,
-      "roundness": {
-        "type": 2
-      },
-      "seed": 426733,
-      "version": 1,
-      "versionNonce": 842713,
-      "isDeleted": false,
-      "boundElements": null,
-      "updated": 1,
-      "link": null,
-      "locked": false,
-      "startBinding": {
-        "elementId": "lidarr",
-        "focus": 0,
-        "gap": 6
-      },
-      "endBinding": {
-        "elementId": "qbittorrent",
-        "focus": 0,
-        "gap": 6
-      },
-      "lastCommittedPoint": null,
-      "startArrowhead": null,
-      "endArrowhead": "arrow",
-      "points": [
-        [
-          0,
-          0
-        ],
-        [
-          -164.79999999999995,
           180.0
         ]
       ]

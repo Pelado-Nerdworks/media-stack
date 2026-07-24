@@ -129,10 +129,6 @@ main() {
   set_urlbase_xml radarr /config/config.xml /radarr
   echo
 
-  wait_for_config lidarr /config/config.xml 180
-  set_urlbase_xml lidarr /config/config.xml /lidarr
-  echo
-
   # Bazarr (config.yaml en /config/config/config.yaml por la imagen LSIO)
   wait_for_config bazarr /config/config/config.yaml 180
   set_urlbase_bazarr bazarr /config/config/config.yaml /bazarr
@@ -153,7 +149,7 @@ main() {
   echo
 
   # Restart apps para que apliquen cambios
-  restart_apps sonarr radarr lidarr bazarr jellyfin
+  restart_apps sonarr radarr bazarr jellyfin
 
   echo
   log "============================================"
@@ -162,8 +158,6 @@ main() {
   log "    http://<IP>/sonarr      → TV shows"
   log "    http://<IP>/radarr      → Movies"
   log "    http://<IP>/bazarr      → Subtitles"
-  log "    http://<IP>/lidarr      → Music"
-  log "    http://<IP>/qbittorrent → Downloads"
   log "    http://<IP>/jellyseerr  → Requests (si soporta subpath)"
   log "    http://<IP>/wizarr      → Invitations (configurar manualmente)"
   log "    http://<IP>:8080        → qBittorrent (puerto dedicado)"

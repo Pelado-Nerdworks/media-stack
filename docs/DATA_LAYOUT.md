@@ -2,7 +2,7 @@
 
 This document explains how the `data/` directory is structured, why it is structured that way, and how each app sees it from inside its container.
 
-We follow the convention from **[TRaSH Guides: Docker folder structure](https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/)** so that the *arr apps (Sonarr, Radarr, Lidarr) can use hardlinks and atomic moves instead of copy + delete.
+We follow the convention from **[TRaSH Guides: Docker folder structure](https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/)** so that the *arr apps (Sonarr, Radarr) can use hardlinks and atomic moves instead of copy + delete.
 
 ## Folder tree
 
@@ -28,7 +28,7 @@ Each app only sees the slice of `data/` it needs:
 | --- | --- | --- | --- |
 | **Sonarr** | `/data` | `${DATA_DIR:-./data}` | Reads torrents, imports to media. Needs the full tree for hardlinks. |
 | **Radarr** | `/data` | `${DATA_DIR:-./data}` | Same as Sonarr. |
-| **Lidarr** | `/data` | `${DATA_DIR:-./data}` | Same as Sonarr. |
+
 | **qBittorrent** | `/data/torrents` | `${DATA_DIR:-./data}/torrents` | Writes downloads only. Never touches media. |
 | **Jellyfin** | `/data/media` | `${DATA_DIR:-./data}/media` | Reads the final library. |
 | **Bazarr** | `/data/media` | `${DATA_DIR:-./data}/media` | Reads the final library to download subtitles. |
@@ -51,7 +51,7 @@ After the stack is up, configure each app's root folders to match:
 
 - **Sonarr**: Settings → Media Management → Root Folders → add `/data/series`
 - **Radarr**: Settings → Media Management → Root Folders → add `/data/movies`
-- **Lidarr**: Settings → Media Management → Root Folders → add `/data/music`
+
 - **qBittorrent**: Tools → Options → Downloads → Default Save Path → `/data/torrents`
 - **Jellyfin**: Dashboard → Libraries → Movies `/data/media/movies`, Series `/data/media/series`, Music `/data/media/music`
 - **Bazarr**: Settings → Sonarr/Radarr → Folder mappings reflect the same paths
@@ -90,7 +90,7 @@ bash scripts/configure-base-urls.sh
 docker compose restart
 ```
 
-Then update the root folder paths inside Sonarr/Radarr/Lidarr to `/data/series`, `/data/movies`, `/data/music` respectively. Jellyfin and Bazarr do not need any changes (their mount target `/data/media` is unchanged).
+Then update the root folder paths inside Sonarr/Radarr to `/data/series` and `/data/movies` respectively. Jellyfin and Bazarr do not need any changes (their mount target `/data/media` is unchanged).
 
 ## Source
 
