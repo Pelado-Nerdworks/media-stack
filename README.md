@@ -7,7 +7,8 @@ Stack completo en Docker para correr tu propio servidor de medios en casa: pelí
 - **Caddy** — reverse proxy con routing automático por path (un dominio, muchas apps)
 - **Jellyfin** — servidor de medios (películas, series, música)
 - **Sonarr** / **Radarr** / **Lidarr** — automatización de bibliotecas (TV, películas, música)
-- **Prowlarr** — gestor de indexers (un solo lugar para agregar trackers)
+- **Jackett** — gestor de indexers (expuesto en `:9117`, sin subpath)
+- **FlareSolverr** — proxy que resuelve challenges de Cloudflare para indexers (`:8191`)
 - **Bazarr** — subtítulos automáticos
 - **qBittorrent** — cliente torrent
 - **Jellyseerr** — UI de pedidos (un Netflix para tus usuarios)
@@ -21,7 +22,7 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
 
 - Servidor Linux (o VM) con **Docker 24+** y **Docker Compose v2**
 - ~20 GB libres en disco para configs y descargas (más si vas a tener una biblioteca grande)
-- Puertos **80** y **443** abiertos
+- Puertos **80**, **443**, **8080**, **9117** y **8191** abiertos
 - Un dominio público (recomendado para HTTPS) o entradas de DNS local — el stack funciona con `http://localhost` también, pero el HTTPS automático necesita un dominio real
 
 ## Inicio rápido
@@ -77,15 +78,16 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
    | Sonarr | `http://tu-servidor/sonarr` |
    | Radarr | `http://tu-servidor/radarr` |
    | Bazarr | `http://tu-servidor/bazarr` |
-   | Prowlarr | `http://tu-servidor/prowlarr` |
    | Lidarr | `http://tu-servidor/lidarr` |
    | Jellyseerr | `http://tu-servidor/jellyseerr` |
    | Wizarr | `http://tu-servidor/wizarr` |
-   | **qBittorrent** | **`http://tu-servidor:8080`** (puerto dedicado) |
+   | **qBittorrent** | **`http://tu-servidor:8080`** |
+   | **Jackett** | **`http://tu-servidor:9117`** |
+   | **FlareSolverr** | **`http://tu-servidor:8191`** |
 
    La primera vez, cada app te pide crear una cuenta. Mirá [Configuración inicial](#configuración-inicial) más abajo.
 
-> **Por qué qBittorrent no usa subpath**: emite URLs relativas en el HTML (`scripts/login.js`, etc.) que no funcionan si Caddy strippea el prefijo. Es la práctica estándar exponerlo en `:8080` directo. Ver `docs/DATA_LAYOUT.md` para el detalle.
+> **Por qué Jackett, qBittorrent y FlareSolverr no usan subpath**: emiten URLs internas que no son compatibles con que un proxy strippee el prefijo (Jackett y FlareSolverr porque no tienen setting oficial de base URL, qBittorrent porque sus URLs son relativas en el HTML). Es la práctica estándar exponerlos en puertos dedicados. Ver [docs/DATA_LAYOUT.md](docs/DATA_LAYOUT.md) para más detalle.
 
 ## Configuración
 
@@ -125,22 +127,23 @@ Caddy está listo para HTTPS automático vía Let's Encrypt. Para activarlo, apu
 
 Una vez que el stack está arriba y accesible:
 
-1. **Prowlarr** — `Settings → Indexers → Add Indexer`. Agregá tus trackers favoritos.
-2. **Sonarr / Radarr / Lidarr** — `Settings → Indexers → Add → Prowlarr` (usa la API key de Prowlarr, está en `Settings → General` dentro de Prowlarr).
-3. **Sonarr / Radarr / Lidarr** — `Settings → Media Management → Root Folders` y agregá:
+1. **Jackett** (en `:9117`) — `Add Indexer` y agregá tus trackers favoritos. Copiate el Torznab feed URL de cada indexer (botón "Copy Feed" en la lista de indexers).
+2. **Sonarr / Radarr / Lidarr** — `Settings → Indexers → Add → Torznab` (no "Prowlarr"). Pegá el Torznab feed URL de Jackett y la API key (`Settings → Dashboard` en Jackett, arriba a la derecha).
+3. **FlareSolverr** — andá a `:8191` y verificá que responde JSON con `{"msg":"..."}` (no requiere config). Después en cada app (Sonarr/Radarr/Lidarr) andá a `Settings → Indexers → [tu indexer] → Tags` y activá el tag `flaresolverr` (o el que use la app), y en `Settings → Indexer Proxies → Add → FlareSolverr` poné `http://flaresolverr:8191/`. Esto permite que los indexers con CloudflareChallenge funcionen.
+4. **Sonarr / Radarr / Lidarr** — `Settings → Media Management → Root Folders` y agregá:
    - Sonarr: `/data/series`
    - Radarr: `/data/movies`
    - Lidarr: `/data/music`
-4. **Sonarr / Radarr / Lidarr** — `Settings → Download Clients → Add → qBittorrent`. Hostname: `qbittorrent` (resolución por la red Docker interna), puerto `8080`. Los *arr no necesitan tocar el puerto publicado en el host, solo el nombre del service.
-5. **qBittorrent** — iniciá sesión con la contraseña temporal que imprime el container en los logs:
+5. **Sonarr / Radarr / Lidarr** — `Settings → Download Clients → Add → qBittorrent`. Hostname: `qbittorrent` (resolución por la red Docker interna), puerto `8080`. Los *arr no necesitan tocar el puerto publicado en el host, solo el nombre del service.
+6. **qBittorrent** (en `:8080`) — iniciá sesión con la contraseña temporal que imprime el container en los logs:
    ```bash
    docker logs qbittorrent | grep -i 'temporary password'
    ```
    Cambiala apenas entres. Después andá a `Tools → Options → Downloads` y poné `Default Save Path = /data/torrents` (sin subcarpeta — los *arr la arman solitos al asignar la descarga).
-6. **Jellyfin** — agregá bibliotecas apuntando a `/data/media/movies`, `/data/media/series`, `/data/media/music`.
-7. **Bazarr** — `Settings → Sonarr/Radarr → Connect` (pegá la API key de cada app).
-8. **Jellyseerr** — conectalo a Jellyfin (API key en `Dashboard → API Keys`) y a Sonarr/Radarr.
-9. **Wizarr** — generá links de invitación desde la UI web para sumar amigos o familia.
+7. **Jellyfin** — agregá bibliotecas apuntando a `/data/media/movies`, `/data/media/series`, `/data/media/music`.
+8. **Bazarr** — `Settings → Sonarr/Radarr → Connect` (pegá la API key de cada app).
+9. **Jellyseerr** — conectalo a Jellyfin (API key en `Dashboard → API Keys`) y a Sonarr/Radarr.
+10. **Wizarr** — generá links de invitación desde la UI web para sumar amigos o familia.
 
 ## Operaciones diarias
 
@@ -169,11 +172,12 @@ docker compose down -v
 ## Troubleshooting
 
 - **La app muestra página en blanco o 404 después de `docker compose up`.** Probablemente no se aplicó la config de subpath. Corré `bash scripts/configure-base-urls.sh` y después `docker compose restart`.
-- **qBittorrent pide contraseña y no la aceptás.** Es la contraseña temporal que imprime el container en el primer arranque. Corré `docker logs qbittorrent | grep -i 'temporary password'`.
+- **qBittorrent / Jackett piden contraseña y no la aceptás.** Son contraseñas temporales que imprimen los containers en el primer arranque. Sacalas con `docker logs qbittorrent` o `docker logs jackett`.
 - **Caddy devuelve 502 / no llega a las apps.** Verificá que Caddy esté arriba (`docker compose ps caddy`) y que los demás containers estén en la red `proxy` (lo están por default).
 - **Errores de "Permission denied" escribiendo a `/data/torrents` o `/data/media`.** Los valores `PUID`/`PGID` en `docker-compose.yml` no coinciden con tu usuario del host. Actualizalos y reiniciá.
-- **"Address already in use" en los puertos 80/443.** Hay otro servidor web (nginx, apache, otro Caddy) ocupando esos puertos. Frenalo o cambialos en `docker-compose.yml`.
+- **"Address already in use" en los puertos 80/443/8080/9117/8191.** Hay otro servicio ocupando esos puertos. Frenalo o cambialos en `docker-compose.yml`.
 - **Los *arr no encuentran las descargas / Jellyfin no muestra archivos nuevos.** Mirá [docs/DATA_LAYOUT.md](docs/DATA_LAYOUT.md): cada *arr necesita el Root Folder correcto y qBittorrent tiene que tener como Default Save Path `/data/torrents`.
+- **Un indexer con CloudflareChallenge falla constantemente.** FlareSolverr no quedó configurado como proxy en Sonarr/Radarr/Lidarr. Revisá el paso 3 de [Configuración inicial](#configuración-inicial).
 
 ## Estructura del repo
 
@@ -184,11 +188,12 @@ media-stack/
 │   ├── sonarr/
 │   ├── radarr/
 │   ├── lidarr/
-│   ├── prowlarr/
+│   ├── jackett/
 │   ├── bazarr/
 │   ├── qbittorrent/
 │   ├── jellyseerr/
 │   ├── wizarr/
+│   ├── flaresolverr/
 │   └── caddy/
 │       └── Caddyfile
 ├── data/                   # Medios + descargas (ignorado por git)
@@ -220,7 +225,9 @@ Pull requests bienvenidos. Mantené los cambios enfocados y actualizá este READ
 
 - [TRaSH Guides](https://trash-guides.info/) — por la convención de folder structure que seguimos
 - [LinuxServer.io](https://docs.linuxserver.io/) — por mantener la mayoría de las imágenes Docker
-- El proyecto [Servarr](https://wiki.servarr.com/) (Sonarr, Radarr, Lidarr, Prowlarr, Bazarr)
+- El proyecto [Servarr](https://wiki.servarr.com/) (Sonarr, Radarr, Lidarr, Bazarr)
+- [Jackett](https://github.com/Jackett/Jackett) — por la implementación de indexers
+- [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) — por resolver challenges de Cloudflare
 - [Jellyfin](https://jellyfin.org) — por el servidor de medios
 - [Jellyseerr](https://github.com/Fallenbagel/jellyseerr) — por la UI de pedidos
 - [Wizarr](https://github.com/Wizarrrr/wizarr) — por el sistema de invitaciones
