@@ -1,98 +1,96 @@
-# Data Layout
+# Estructura de datos
 
-This document explains how the `data/` directory is structured, why it is structured that way, and how each app sees it from inside its container.
+Este documento explica cómo está estructurado el directorio `data/`, por qué se estructura así, y cómo cada app lo ve desde adentro de su container.
 
-We follow the convention from **[TRaSH Guides: Docker folder structure](https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/)** so that the *arr apps (Sonarr, Radarr) can use hardlinks and atomic moves instead of copy + delete.
+Seguimos la convención de **[TRaSH Guides: Docker folder structure](https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/)** para que los *arr (Sonarr, Radarr) puedan usar hardlinks y moves atómicos en lugar de copy + delete.
 
-## Folder tree
+## Árbol de carpetas
 
 ```
 data/
-├── torrents/              # qBittorrent writes here. *arr move files out when complete.
+├── torrents/              # qBittorrent escribe acá. Los *arr mueven los archivos al terminar.
 │   ├── movies/
 │   ├── series/
 │   └── music/
-└── media/                 # Final library. Jellyfin and Bazarr read from here.
+└── media/                 # Biblioteca final. Jellyfin y Bazarr leen de acá.
     ├── movies/
     ├── series/
     └── music/
 ```
 
-`.gitkeep` files keep every empty subfolder in git so the structure is reproducible from a fresh clone.
+Los archivos `.gitkeep` mantienen cada subcarpeta vacía en git para que la estructura sea reproducible desde un clone limpio.
 
-## Who sees what (container mounts)
+## Quién ve qué (mounts de los containers)
 
-Each app only sees the slice of `data/` it needs:
+Cada app solo ve la parte de `data/` que necesita:
 
-| App | Container path | Host path | Purpose |
+| App | Path en container | Path en host | Propósito |
 | --- | --- | --- | --- |
-| **Sonarr** | `/data` | `${DATA_DIR:-./data}` | Reads torrents, imports to media. Needs the full tree for hardlinks. |
-| **Radarr** | `/data` | `${DATA_DIR:-./data}` | Same as Sonarr. |
+| **Sonarr** | `/data` | `${DATA_DIR:-./data}` | Lee torrents, importa a media. Necesita el árbol entero para los hardlinks. |
+| **Radarr** | `/data` | `${DATA_DIR:-./data}` | Igual que Sonarr. |
+| **qBittorrent** | `/data/torrents` | `${DATA_DIR:-./data}/torrents` | Solo escribe descargas. Nunca toca media. |
+| **Jellyfin** | `/data/media` | `${DATA_DIR:-./data}/media` | Lee la biblioteca final. |
+| **Bazarr** | `/data/media` | `${DATA_DIR:-./data}/media` | Lee la biblioteca final para bajar subtítulos. |
+| Jackett, FlareSolverr, Jellyseerr, Wizarr, Caddy | — | — | No acceden a `data/`. |
 
-| **qBittorrent** | `/data/torrents` | `${DATA_DIR:-./data}/torrents` | Writes downloads only. Never touches media. |
-| **Jellyfin** | `/data/media` | `${DATA_DIR:-./data}/media` | Reads the final library. |
-| **Bazarr** | `/data/media` | `${DATA_DIR:-./data}/media` | Reads the final library to download subtitles. |
-| Prowlarr, Jellyseerr, Wizarr, Caddy | — | — | No access to `data/`. |
+## ¿Por qué no montar `/data/movies` y `/data/downloads` separados?
 
-## Why not just mount `/data/movies` and `/data/downloads`?
+Es el atajo que sugieren la mayoría de las guías de inicio rápido, y es lo que hacía este stack antes. Funciona, pero tiene un costo real:
 
-That's the shortcut most quickstart guides suggest, and it's what this stack used to do. It works, but it has a real cost:
+- **Sin hardlinks**. Cuando Radarr mueve un archivo terminado de `downloads/` a `movies/`, Docker trata los dos mounts como filesystems separados aunque no lo sean. Radarr cae a **copy + delete**: el archivo existe dos veces en disco temporalmente, pagás doble I/O, y el move no es atómico.
+- **Sin moves atómicos**. Si el proceso se cae a mitad de move, queda un archivo a medio copiar en `movies/` y un huérfano en `downloads/`.
+- **Pico de uso de disco más alto**. Durante el copy, una peli de 50 GB consume temporalmente 50 GB libres más los 50 GB que está copiando desde el origen.
+- **Más wear en SSDs**. Amplificación de writes innecesaria.
 
-- **No hardlinks**. When Radarr moves a finished file from `downloads/` to `movies/`, Docker treats the two mounts as separate filesystems even when they aren't. Radarr falls back to **copy + delete**: the file exists twice on disk temporarily, you pay double I/O, and the move is not atomic.
-- **No atomic moves**. A crash mid-move leaves a half-copied file in `movies/` and an orphan in `downloads/`.
-- **Higher peak disk usage**. During a copy, a 50 GB movie briefly consumes 50 GB of free space plus the 50 GB it's copying from.
-- **More SSD wear**. Unnecessary write amplification.
+El layout de TRaSH arregla todo esto montando `/data` entero en los *arr. Ven el mismo filesystem que el host, así que el kernel puede hardlinkear archivos entre `torrents/` y `media/`, y un rename es una sola operación sobre inodes.
 
-The TRaSH layout fixes all of this by mounting `/data` whole into the *arr apps. They see the same filesystem the host sees, so the kernel can hardlink files across `torrents/` and `media/`, and rename is a single inode operation.
+## Dentro de las apps
 
-## Inside the apps
-
-After the stack is up, configure each app's root folders to match:
+Después de levantar el stack, configurá los Root Folders de cada app para que matcheen:
 
 - **Sonarr**: Settings → Media Management → Root Folders → add `/data/series`
 - **Radarr**: Settings → Media Management → Root Folders → add `/data/movies`
-
 - **qBittorrent**: Tools → Options → Downloads → Default Save Path → `/data/torrents`
 - **Jellyfin**: Dashboard → Libraries → Movies `/data/media/movies`, Series `/data/media/series`, Music `/data/media/music`
-- **Bazarr**: Settings → Sonarr/Radarr → Folder mappings reflect the same paths
+- **Bazarr**: Settings → Sonarr/Radarr → Folder mappings con los mismos paths
 
-## Adding a new media type
+## Agregar un nuevo tipo de medio
 
-If you ever add Books (Readarr) or Audiobooks (Audiobookshelf), extend the layout the same way:
+Si en algún momento sumás Books (Readarr) o Audiobooks (Audiobookshelf), extendé el layout de la misma forma:
 
 ```bash
 mkdir -p data/torrents/books data/torrents/audiobooks data/media/books data/media/audiobooks
 touch data/torrents/{books,audiobooks}/.gitkeep data/media/{books,audiobooks}/.gitkeep
 ```
 
-Mount `/data` into Readarr (or whatever the new arr is), and `/data/torrents/<type>` into the download client. The hardlink trick keeps working because every folder is under the same parent on the host.
+Montá `/data` en Readarr (o el nuevo arr que sea), y `/data/torrents/<tipo>` en el cliente torrent. El truco del hardlink sigue funcionando porque toda carpeta queda bajo el mismo padre en el host.
 
-## Migrating from the old layout
+## Migración desde el layout viejo
 
-If you're upgrading from a previous version of this stack that used flat `data/{movies,series,music,downloads}/`, follow these steps. **Stop the stack first** so nothing is mid-write:
+Si venís de una versión anterior de este stack que usaba `data/{movies,series,music,downloads}/` plano, seguí estos pasos. **Frená el stack primero** para que nada esté escribiendo:
 
 ```bash
 cd /opt/media-stack
 docker compose down
 
-# Move existing downloads into the new staging tree
+# Mover descargas existentes al nuevo árbol de staging
 mkdir -p data/torrents
 mv data/downloads/* data/torrents/
 rmdir data/downloads
 
-# Move existing libraries into the new media tree
+# Mover bibliotecas existentes al nuevo árbol de media
 mkdir -p data/media
 mv data/movies data/series data/music data/media/
 
-# Restart
+# Reiniciar
 docker compose up -d
 bash scripts/configure-base-urls.sh
 docker compose restart
 ```
 
-Then update the root folder paths inside Sonarr/Radarr to `/data/series` and `/data/movies` respectively. Jellyfin and Bazarr do not need any changes (their mount target `/data/media` is unchanged).
+Después actualizá los Root Folders adentro de Sonarr/Radarr a `/data/series` y `/data/movies` respectivamente. Jellyfin y Bazarr no necesitan cambios (su target de mount `/data/media` no cambió).
 
-## Source
+## Fuente
 
 - [TRaSH Guides — Docker folder structure](https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/)
 - [Servarr Wiki — Hardlinks and atomic moves](https://wiki.servarr.com/docker-guide#hard-links-and-moves)

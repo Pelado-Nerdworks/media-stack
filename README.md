@@ -16,6 +16,12 @@ Stack completo en Docker para correr tu propio servidor de medios en casa: pelí
 
 Mirá [`architecture.excalidraw`](architecture.excalidraw) para el diagrama completo de topología (abrilo en <https://excalidraw.com>).
 
+## Diagrama del stack
+
+Vista rápida de cómo se conectan las piezas. El pelado apunta al server con dos devices (celu y PC), Caddy rutea por subpath a Jellyfin/Sonarr/Radarr/Bazarr, Sonarr/Radarr/Jackett mandan torrents a qBittorrent que escribe en `/data/torrents/`, y Jellyfin escanea la biblioteca final en `/data/media/`.
+
+![Diagrama del stack](docs/media-stack-diagram.jpg)
+
 La estructura interna de carpetas sigue la convención de [TRaSH Guides](https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/) para que los *arr puedan usar hardlinks y moves atómicos. Ver [docs/DATA_LAYOUT.md](docs/DATA_LAYOUT.md) para el detalle.
 
 ## Requisitos
