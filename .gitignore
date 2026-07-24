@@ -1,0 +1,7 @@
+# Configs y data son grandes / sensibles
+config/
+data/
+*.log
+.DS_Store
+.env
+*.swp

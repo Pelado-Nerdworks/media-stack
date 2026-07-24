@@ -1,0 +1,187 @@
+name: media-stack
+
+# Stack de medios auto-hospedado con acceso externo via subpaths.
+# Reverse proxy: Caddy con Caddyfile estático (config/caddy/Caddyfile).
+# Acceso: http://<IP-O-DOMINIO>/{jellyfin,sonarr,radarr,bazarr,prowlarr,lidarr,jellyseerr,wizarr,qbittorrent}
+#
+# Cada app necesita tener su "Base URL" / "UrlBase" seteada para que el subpath funcione.
+# Después del primer boot corré `scripts/configure-base-urls.sh` para configurarlas
+# y reiniciar las apps.
+#
+# ─── Paths ────────────────────────────────────────────────────────────────────
+# Las rutas de host (./config, ./data) se configuran vía variables de entorno
+# en un archivo `.env` al lado de este compose. Copiá `.env.example` como `.env`
+# y editá los valores si querés mover las carpetas (ej. a /srv/media).
+# Defaults apuntan a ./config y ./data relativos al compose, igual que antes.
+
+services:
+  # === Reverse proxy (Caddy con Caddyfile estático) ===
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${CONFIG_DIR:-./config}/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - proxy
+
+  # === Indexer manager ===
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - ${CONFIG_DIR:-./config}/prowlarr:/config
+    networks:
+      - proxy
+
+  # === TV shows ===
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - ${CONFIG_DIR:-./config}/sonarr:/config
+      - ${DATA_DIR:-./data}/downloads:/downloads
+      - ${DATA_DIR:-./data}/series:/tv
+    networks:
+      - proxy
+
+  # === Movies ===
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - ${CONFIG_DIR:-./config}/radarr:/config
+      - ${DATA_DIR:-./data}/downloads:/downloads
+      - ${DATA_DIR:-./data}/movies:/movies
+    networks:
+      - proxy
+
+  # === Subtitles ===
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - ${CONFIG_DIR:-./config}/bazarr:/config
+      - ${DATA_DIR:-./data}/movies:/movies
+      - ${DATA_DIR:-./data}/series:/tv
+    depends_on:
+      - radarr
+      - sonarr
+    networks:
+      - proxy
+
+  # === Music ===
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - ${CONFIG_DIR:-./config}/lidarr:/config
+      - ${DATA_DIR:-./data}/downloads:/downloads
+      - ${DATA_DIR:-./data}/music:/music
+    networks:
+      - proxy
+
+  # === Downloads ===
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+      - WEBUI_PORT=8080
+    volumes:
+      - ${CONFIG_DIR:-./config}/qbittorrent:/config
+      - ${DATA_DIR:-./data}/downloads:/downloads
+    networks:
+      - proxy
+
+  # === Media server ===
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+      - JELLYFIN_PublishedServerUrl=http://localhost:8096
+    volumes:
+      - ${CONFIG_DIR:-./config}/jellyfin:/config
+      - ${DATA_DIR:-./data}/movies:/data/movies
+      - ${DATA_DIR:-./data}/series:/data/series
+      - ${DATA_DIR:-./data}/music:/data/music
+    networks:
+      - proxy
+
+  # === Request management ===
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+      - LOG_LEVEL=info
+    volumes:
+      - ${CONFIG_DIR:-./config}/jellyseerr:/app/config
+    networks:
+      - proxy
+
+  # === User invitation system ===
+  # Imagen custom de pablokbs con APPLICATION_ROOT funcionando
+  # (commits sobre wizarr upstream en junio 2026).
+  wizarr:
+    image: docker.io/pablokbs/wizarr
+    container_name: wizarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+      - APPLICATION_ROOT=/wizarr
+    volumes:
+      - ${CONFIG_DIR:-./config}/wizarr:/config
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
