@@ -135,6 +135,8 @@ Una vez que el stack está arriba y accesible:
 1. **Jackett** (en `:9117`) — `Add Indexer` y agregá tus trackers favoritos. Copiate el Torznab feed URL de cada indexer (botón "Copy Feed" en la lista de indexers).
 2. **Sonarr / Radarr** — `Settings → Indexers → Add → Torznab` (no "Prowlarr"). Pegá el Torznab feed URL de Jackett y la API key (`Settings → Dashboard` en Jackett, arriba a la derecha).
 3. **FlareSolverr** — andá a `:8191` y verificá que responde JSON con `{"msg":"..."}` (no requiere config). Después en cada app (Sonarr/Radarr) andá a `Settings → Indexers → [tu indexer] → Tags` y activá el tag `flaresolverr` (o el que use la app), y en `Settings → Indexer Proxies → Add → FlareSolverr` poné `http://flaresolverr:8191/`. Esto permite que los indexers con CloudflareChallenge funcionen.
+
+> 📘 Para el setup detallado de indexers (cómo agregar trackers en Jackett, configurar FlareSolverr por indexer, conectar los feeds Torznab en Sonarr/Radarr, categorías y troubleshooting), ver [`docs/INDEXERS.md`](docs/INDEXERS.md).
 4. **Sonarr / Radarr** — `Settings → Media Management → Root Folders` y agregá:
    - Sonarr: `/data/series`
    - Radarr: `/data/movies`
@@ -212,7 +214,8 @@ media-stack/
 │   ├── init-data-dirs.sh         # crea la estructura de data/ (idempotente)
 │   └── configure-base-urls.sh    # setea los subpaths en cada app post-boot
 ├── docs/
-│   └── DATA_LAYOUT.md            # explica por qué la estructura sigue TRaSH Guides
+│   ├── DATA_LAYOUT.md            # explica por qué la estructura sigue TRaSH Guides
+│   └── INDEXERS.md               # setup detallado de Jackett, FlareSolverr e indexers
 ├── architecture.excalidraw       # diagrama top-down del stack
 ├── docker-compose.yml
 ├── .env.example
