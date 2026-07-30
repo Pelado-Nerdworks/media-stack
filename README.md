@@ -126,7 +126,7 @@ Las apps corren con `PUID=1000` / `PGID=1000` (típico del primer usuario en Ubu
 
 ### HTTPS
 
-Caddy está listo para HTTPS automático vía Let's Encrypt. Para activarlo, apuntá un dominio real a tu servidor (registro A en DNS) y editá el Caddyfile en `config/caddy/` para agregar el `email` y el dominio. Mirá la [doc de Caddy](https://caddyserver.com/docs/automatic-https).
+Caddy está listo para HTTPS automático vía Let's Encrypt. Para activarlo, apuntá un dominio real a tu servidor (registro A en DNS) y editá el `caddy/Caddyfile` para agregar el `email` y el dominio. Mirá la [doc de Caddy](https://caddyserver.com/docs/automatic-https).
 
 ## Configuración inicial
 
@@ -180,6 +180,7 @@ docker compose down -v
 - **La app muestra página en blanco o 404 después de `docker compose up`.** Probablemente no se aplicó la config de subpath. Corré `bash scripts/configure-base-urls.sh` y después `docker compose restart`.
 - **qBittorrent / Jackett piden contraseña y no la aceptás.** Son contraseñas temporales que imprimen los containers en el primer arranque. Sacalas con `docker logs qbittorrent` o `docker logs jackett`.
 - **Caddy devuelve 502 / no llega a las apps.** Verificá que Caddy esté arriba (`docker compose ps caddy`) y que los demás containers estén en la red `proxy` (lo están por default).
+- **Caddy se queja de "Caddyfile is a directory" o todos los subpaths devuelven 404.** El bind mount no encontró el archivo en el host y Docker creó un directorio vacío adentro del contenedor. Asegurate de haber clonado el repo con `caddy/Caddyfile` presente (no debe estar ignorado por `.gitignore`). Si no existe, copialo manualmente a `./caddy/Caddyfile` y reintenta `docker compose up -d --force-recreate caddy`.
 - **Errores de "Permission denied" escribiendo a `/data/torrents` o `/data/media`.** Los valores `PUID`/`PGID` en `docker-compose.yml` no coinciden con tu usuario del host. Actualizalos y reiniciá.
 - **"Address already in use" en los puertos 80/443/8080/9117/8191.** Hay otro servicio ocupando esos puertos. Frenalo o cambialos en `docker-compose.yml`.
 - **Los *arr no encuentran las descargas / Jellyfin no muestra archivos nuevos.** Mirá [docs/DATA_LAYOUT.md](docs/DATA_LAYOUT.md): cada *arr necesita el Root Folder correcto y qBittorrent tiene que tener como Default Save Path `/data/torrents`.
@@ -198,9 +199,9 @@ media-stack/
 │   ├── qbittorrent/
 │   ├── jellyseerr/
 │   ├── wizarr/
-│   ├── flaresolverr/
-│   └── caddy/
-│       └── Caddyfile
+│   └── flaresolverr/
+├── caddy/                  # Caddyfile estático, commiteado (es infra-as-code)
+│   └── Caddyfile
 ├── data/                   # Medios + descargas (ignorado por git)
 │   ├── torrents/           # staging (escribe qBittorrent)
 │   │   ├── movies/

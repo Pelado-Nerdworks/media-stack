@@ -1,0 +1,65 @@
+{
+    # Sin dominio real, sólo HTTP en :80 para el demo.
+    auto_https off
+    admin off
+}
+
+:80 {
+    # === Apps CON UrlBase / APPLICATION_ROOT configurado ===
+    # El proxy NO strippea el prefijo: la app sabe su base
+    # y sirve las URLs internas con el prefijo incluido.
+
+    @sonarr path /sonarr*
+    handle @sonarr {
+        reverse_proxy sonarr:8989
+    }
+
+    @radarr path /radarr*
+    handle @radarr {
+        reverse_proxy radarr:7878
+    }
+
+    @bazarr path /bazarr*
+    handle @bazarr {
+        reverse_proxy bazarr:6767
+    }
+
+    @jellyfin path /jellyfin*
+    handle @jellyfin {
+        reverse_proxy jellyfin:8096
+    }
+
+    # Wizarr custom de pablokbs con APPLICATION_ROOT=/wizarr.
+    @wizarr path /wizarr*
+    handle @wizarr {
+        reverse_proxy wizarr:5690
+    }
+
+    # === Apps SIN soporte de subpath (strippeamos prefijo) ===
+
+    # qBittorrent NO va por aca: se expone directo en :8080 del host
+    # (ver el puerto en docker-compose.yml). No soporta subpath de forma
+    # estable porque sus URLs internas son relativas y se rompen cuando
+    # Caddy strippea el prefijo.
+
+    # Jellyseerr: redirect interno va a /setup, no respeta subpath.
+    @jellyseerr path /jellyseerr*
+    handle_path /jellyseerr* {
+        reverse_proxy jellyseerr:5055
+    }
+    # Catch-all para assets/redirects internos de Jellyseerr.
+    @jellyseerr-assets path /_next/* /logo* /favicon* /apple-* /site.webmanifest /setup* /login* /css/* /js/* /images/*
+    handle @jellyseerr-assets {
+        reverse_proxy jellyseerr:5055
+    }
+
+    # Health check
+    handle /healthz {
+        respond "ok"
+    }
+
+    # Catch-all 404 con mensaje amigable
+    handle {
+        respond "Not found. Try /jellyfin, /sonarr, /radarr, /bazarr, /jellyseerr, /wizarr. qBittorrent esta en :8080. Jackett en :9117. FlareSolverr en :8191." 404
+    }
+}

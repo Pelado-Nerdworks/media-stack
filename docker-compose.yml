@@ -1,7 +1,7 @@
 name: media-stack
 
 # Stack de medios auto-hospedado con acceso externo via subpaths.
-# Reverse proxy: Caddy con Caddyfile estático (config/caddy/Caddyfile).
+# Reverse proxy: Caddy con Caddyfile estático (./caddy/Caddyfile).
 # Acceso: http://<IP-O-DOMINIO>/{jellyfin,sonarr,radarr,bazarr,jellyseerr,wizarr,qbittorrent}
 #
 # Cada app necesita tener su "Base URL" / "UrlBase" seteada para que el subpath funcione.
@@ -29,7 +29,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ${CONFIG_DIR:-./config}/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Caddyfile vive en el repo (./caddy/) — no se ignora por .gitignore,
+      # así un clon fresco tiene el archivo disponible para el bind mount.
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     networks:
