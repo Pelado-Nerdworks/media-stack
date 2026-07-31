@@ -163,12 +163,11 @@ services:
 
   # === Request management ===
   jellyseerr:
-    image: fallenbagel/jellyseerr:latest
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
     container_name: jellyseerr
     restart: unless-stopped
     environment:
-      - PUID=1000
-      - PGID=1000
       - TZ=America/Argentina/Mendoza
       - LOG_LEVEL=info
     volumes:
