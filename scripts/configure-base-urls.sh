@@ -89,16 +89,27 @@ set_urlbase_bazarr() {
   local path="$2"
   local value="$3"
   docker exec "$container" bash -c "
-    if grep -qE '^url_base:[[:space:]]*${value}' '${path}'; then
-      echo '  Bazarr url_base ya estaba en ${value} (no-op)'
-    elif grep -qE '^url_base:' '${path}'; then
-      sed -i 's|^url_base:.*|url_base: ${value}|' '${path}'
-      echo '  Bazarr url_base actualizado'
-    else
-      # No existe — agregar al final del archivo (Bazarr acepta YAML top-level)
-      echo 'url_base: ${value}' >> '${path}'
-      echo '  Bazarr url_base agregado al final del YAML'
-    fi
+    awk -v val='${value}' '
+      BEGIN { in_general=0; done=0 }
+      /^general:/ { in_general=1; print; next }
+      in_general && /^[^[:space:]]/ {
+        if (!done) { print \"  url_base: \" val; done=1 }
+        in_general=0
+        print
+        next
+      }
+      in_general && /^[[:space:]]+url_base:/ {
+        print \"  url_base: \" val
+        done=1
+        next
+      }
+      { print }
+      END {
+        if (in_general && !done) print \"  url_base: \" val
+        if (!done && !in_general) { }
+      }
+    ' '${path}' > '${path}.tmp' && mv '${path}.tmp' '${path}'
+    echo '  Bazarr url_base set to ${value}'
   "
 }
 
