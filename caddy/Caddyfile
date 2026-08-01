@@ -48,7 +48,7 @@
         reverse_proxy jellyseerr:5055
     }
     # Catch-all para assets/redirects internos de Jellyseerr.
-    @jellyseerr-assets path /_next/* /logo* /favicon* /apple-* /site.webmanifest /setup* /login* /css/* /js/* /images/*
+    @jellyseerr-assets path /api/* /_next/* /logo* /favicon* /apple-* /site.webmanifest /setup* /login* /css/* /js/* /images/*
     handle @jellyseerr-assets {
         reverse_proxy jellyseerr:5055
     }
