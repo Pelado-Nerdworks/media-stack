@@ -140,7 +140,7 @@ services:
       - ${CONFIG_DIR:-./config}/qbittorrent:/config
       # qBittorrent solo escribe en /data/torrents. Los *arr mueven los archivos
       # terminados a /data/media vía hardlink + delete del original.
-      - ${DATA_DIR:-./data}/torrents:/data/torrents
+      - ${DATA_DIR:-./data}/torrents:/downloads
     networks:
       - proxy
 
