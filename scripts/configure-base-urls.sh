@@ -84,20 +84,19 @@ set_baseurl_jellyfin() {
 }
 
 set_urlbase_bazarr() {
-  # Bazarr: usa config.yaml, la key url_base puede no existir
+  # Bazarr: la key correcta es general.base_url (NO url_base).
+  # Hay otras keys base_url en sonarr:/radarr:; solo tocamos la sección general.
   local container="$1"
   local path="$2"
   local value="$3"
   docker exec "$container" bash -c "
-    if grep -qE '^url_base:[[:space:]]*${value}' '${path}'; then
-      echo '  Bazarr url_base ya estaba en ${value} (no-op)'
-    elif grep -qE '^url_base:' '${path}'; then
-      sed -i 's|^url_base:.*|url_base: ${value}|' '${path}'
-      echo '  Bazarr url_base actualizado'
+    if sed -n '/^general:/,/^[^[:space:]]/{/^[[:space:]]*base_url:[[:space:]]*${value}/p;}' '${path}' | grep -q .; then
+      echo '  Bazarr general.base_url ya estaba en ${value} (no-op)'
+    elif sed -n '/^general:/,/^[^[:space:]]/{/^[[:space:]]*base_url:/p;}' '${path}' | grep -q .; then
+      sed -i '/^general:/,/^[^[:space:]]/s|^[[:space:]]*base_url:.*|  base_url: ${value}|' '${path}'
+      echo '  Bazarr general.base_url actualizado a ${value}'
     else
-      # No existe — agregar al final del archivo (Bazarr acepta YAML top-level)
-      echo 'url_base: ${value}' >> '${path}'
-      echo '  Bazarr url_base agregado al final del YAML'
+      echo '  WARN: no se encontró general.base_url en ${path}; revisar manualmente'
     fi
   "
 }
@@ -131,7 +130,7 @@ main() {
 
   # Bazarr (config.yaml en /config/config/config.yaml por la imagen LSIO)
   wait_for_config bazarr /config/config/config.yaml 180
-  set_urlbase_bazarr bazarr /config/config/config.yaml /bazarr
+  set_urlbase_bazarr bazarr /config/config/config.yaml /bazarr/
   echo
 
   # Jellyfin (network.xml — puede no tener <BaseUrl>)
