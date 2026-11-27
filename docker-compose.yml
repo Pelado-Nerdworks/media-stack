@@ -188,7 +188,9 @@ services:
       - TZ=America/Argentina/Mendoza
       - APPLICATION_ROOT=/wizarr
     volumes:
-      - ${CONFIG_DIR:-./config}/wizarr:/config
+      # Wizarr guarda la DB SQLite en /data/database (no en /config).
+      # Sin este mount, usuarios y ajustes se pierden al recrear el container.
+      - ${CONFIG_DIR:-./config}/wizarr/database:/data/database
     networks:
       - proxy
 
