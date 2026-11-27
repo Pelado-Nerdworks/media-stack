@@ -178,6 +178,10 @@ services:
   # === User invitation system ===
   # Imagen custom de pablokbs con APPLICATION_ROOT funcionando
   # (commits sobre wizarr upstream en junio 2026).
+  # OJO: esta imagen es de junio 2026 y no incluye el fix de Wizarr para
+  # Jellyfin 12 (headers `Authorization: MediaBrowser`, wizarrrr/wizarr#1318).
+  # Mientras tanto Jellyfin necesita EnableLegacyAuthorization=true (ver README).
+  # Actualizar cuando haya una imagen nueva.
   wizarr:
     image: docker.io/pablokbs/wizarr
     container_name: wizarr
